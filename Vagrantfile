@@ -64,22 +64,6 @@ Vagrant.configure('2') do |config|
       rsync__exclude: ['.git/']
   end
 
-  # Private Network
-  config.vm.network :private_network,
-    :ip => '10.10.10.2',
-    :auto_config => false,
-    :libvirt__network_name => 'vagrant-baremetal',
-    :libvirt__dhcp_enabled => false,
-    :libvirt__forward_mode => 'none',
-    :libvirt__guest_ipv6 => 'no'
-  config.vm.network :private_network,
-    :ip => '10.10.10.3',
-    :auto_config => false,
-    :libvirt__network_name => 'vagrant-baremetal',
-    :libvirt__dhcp_enabled => false,
-    :libvirt__forward_mode => 'none',
-    :libvirt__guest_ipv6 => 'no'
-
   # Libvirt Provider Configuration
   config.vm.provider :libvirt do |libvirt|
     # CPU
@@ -129,6 +113,24 @@ Vagrant.configure('2') do |config|
 
   Dir.glob('config/*.yaml').each do |file|
     hostname = File.basename(file, '.*')
+
+    # Loading Yaml
+    require 'yaml'
+    yaml = YAML.load_file(file)
+    if yaml.key?('network') and
+       yaml['network'].kind_of?(Array) and
+       yaml['network'].size > 0 then
+      yaml['network'].each do |network|
+        if network.key?('ip')
+          config.vm.network :private_network,
+            :ip => network['ip'],
+            :libvirt__network_name => 'vagrant-frrouting',
+            :libvirt__dhcp_enabled => false,
+            :libvirt__forward_mode => 'none',
+            :libvirt__guest_ipv6 => 'no'
+        end
+      end
+    end
 
     # Vagrant Domain
     config.vm.define "#{hostname}" do |domain|

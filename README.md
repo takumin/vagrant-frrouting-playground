@@ -11,6 +11,13 @@ Example:
 ```yaml:config/${vagrant-hostname}.yaml
 ---
 #
+# Network Configuration
+#
+network:
+- ip: '10.10.10.2'
+- ip: '10.10.10.3'
+
+#
 # FRRouting Configuration
 #
 frrouting:
