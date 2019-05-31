@@ -181,10 +181,24 @@ template '/etc/frr/daemons' do
   mode  '0640'
 end
 
+service 'frr.service' do
+  action [:enable, :start]
+end
+
 #
 # Event Handler
 #
 
 execute 'apt-get update' do
   action :nothing
+end
+
+execute 'systemctl daemon-reload' do
+  action :nothing
+  subscribes :run, 'template[/etc/frr/daemons]'
+end
+
+execute 'systemctl restart frr.service' do
+  action :nothing
+  subscribes :run, 'template[/etc/frr/daemons]'
 end
