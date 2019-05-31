@@ -11,25 +11,6 @@ MITAMAE_COOKBOOKS = [
   'cookbooks/frrouting/default.rb',
 ]
 
-# MItamae Variables
-if File.exists?(File.join(File.expand_path(__dir__), 'local.yaml'))
-  require 'fileutils'
-  FileUtils.cp(
-    File.join(File.expand_path(__dir__), 'local.yaml'),
-    File.join(File.expand_path(__dir__), 'vendor', 'mitamae.yaml'),
-    {:verbose => true}
-  )
-else
-  require 'yaml'
-  YAML.dump({
-    'frrouting' => {
-      'enabled' => {
-        'vtysh' => true,
-      },
-    },
-  }, File.open(File.join(File.expand_path(__dir__), 'vendor', 'mitamae.yaml'), 'w'))
-end
-
 # Download Require Binary
 require 'open-uri'
 [
@@ -83,6 +64,22 @@ Vagrant.configure('2') do |config|
       rsync__exclude: ['.git/']
   end
 
+  # Private Network
+  config.vm.network :private_network,
+    :ip => '10.10.10.2',
+    :auto_config => false,
+    :libvirt__network_name => 'vagrant-baremetal',
+    :libvirt__dhcp_enabled => false,
+    :libvirt__forward_mode => 'none',
+    :libvirt__guest_ipv6 => 'no'
+  config.vm.network :private_network,
+    :ip => '10.10.10.3',
+    :auto_config => false,
+    :libvirt__network_name => 'vagrant-baremetal',
+    :libvirt__dhcp_enabled => false,
+    :libvirt__forward_mode => 'none',
+    :libvirt__guest_ipv6 => 'no'
+
   # Libvirt Provider Configuration
   config.vm.provider :libvirt do |libvirt|
     # CPU
@@ -99,6 +96,14 @@ Vagrant.configure('2') do |config|
   end
 
   # MItamae Provision
+  config.vm.provision 'shell' do |shell|
+    shell.name   = 'Install mitamae'
+    shell.inline = <<~BASH
+      if ! mitamae version > /dev/null 2>&1; then
+        install -o root -g root -m 0755 /vagrant/vendor/mitamae/mitamae-x86_64-linux /usr/local/bin/mitamae
+      fi
+    BASH
+  end
   config.vm.provision 'shell' do |shell|
     shell.name   = 'Provision mitamae'
     shell.env = {
@@ -117,18 +122,27 @@ Vagrant.configure('2') do |config|
       'APT_REPO_URL_FRROUTING'   => ENV['APT_REPO_URL_FRROUTING'],
     }
     shell.inline = <<~BASH
-      if ! mitamae version > /dev/null 2>&1; then
-        install -o root -g root -m 0755 /vagrant/vendor/mitamae/mitamae-x86_64-linux /usr/local/bin/mitamae
-      fi
       cd /vagrant
-      mitamae local -y vendor/mitamae.yaml helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
+      mitamae local helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
     BASH
   end
 
-  # Gateway
-  (1..1).each do |i|
-    config.vm.define "gateway-#{i}" do |domain|
-      domain.vm.hostname = "vagrant-gateway-#{i}"
+  Dir.glob('config/*.yaml').each do |file|
+    hostname = File.basename(file, '.*')
+
+    # Vagrant Domain
+    config.vm.define "#{hostname}" do |domain|
+      # Hostname
+      domain.vm.hostname = "vagrant-#{hostname}"
+
+      # Override Provision
+      config.vm.provision 'shell' do |shell|
+        shell.name   = 'Provision mitamae'
+        shell.inline = <<~BASH
+          cd /vagrant
+          mitamae local -y #{file} helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
+        BASH
+      end
     end
   end
 end

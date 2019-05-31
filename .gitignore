@@ -2,4 +2,5 @@
 .vagrant/
 vendor/*
 !vendor/.gitkeep
-local.yaml
+config/*
+!config/.gitkeep

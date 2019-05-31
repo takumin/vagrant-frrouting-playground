@@ -4,11 +4,11 @@ FRRouting Playground
 
 # Local Configuration
 
-Create `local.yaml` under this repository path.
+Create `config/${vagrant-hostname}.yaml` under this repository path.
 
 Example:
 
-```yaml:local.yaml
+```yaml:config/${vagrant-hostname}.yaml
 ---
 #
 # FRRouting Configuration
