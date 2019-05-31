@@ -12,22 +12,23 @@ MITAMAE_COOKBOOKS = [
 ]
 
 # MItamae Variables
-require 'yaml'
-YAML.dump({
-  'frrouting' => {
-    'enabled' => {
-      'bgpd' => true,
+if File.exists?(File.join(File.expand_path(__dir__), 'local.yaml'))
+  require 'fileutils'
+  FileUtils.cp(
+    File.join(File.expand_path(__dir__), 'local.yaml'),
+    File.join(File.expand_path(__dir__), 'vendor', 'mitamae.yaml'),
+    {:verbose => true}
+  )
+else
+  require 'yaml'
+  YAML.dump({
+    'frrouting' => {
+      'enabled' => {
+        'vtysh' => true,
+      },
     },
-    'config' => {
-      'zebra' => [
-        'hostname vagrant',
-      ],
-      'bgpd' => [
-        'hostname vagrant',
-      ],
-    },
-  },
-}, File.open(File.join(File.expand_path(__dir__), 'vendor', 'mitamae.yaml'), 'w'))
+  }, File.open(File.join(File.expand_path(__dir__), 'vendor', 'mitamae.yaml'), 'w'))
+end
 
 # Download Require Binary
 require 'open-uri'
