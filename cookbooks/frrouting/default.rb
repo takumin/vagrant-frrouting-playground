@@ -240,6 +240,14 @@ package 'frr'
 package 'frr-pythontools'
 
 #
+# Admin VTY Shell
+#
+
+execute "usermod -aG frrvty #{node[:current][:user]}" do
+  not_if "grep -qs '^frrvty.*#{node[:current][:user]}' /etc/group"
+end
+
+#
 # Configuration Service
 #
 
