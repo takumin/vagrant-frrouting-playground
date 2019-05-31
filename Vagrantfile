@@ -12,9 +12,22 @@ MITAMAE_COOKBOOKS = [
 ]
 
 # MItamae Variables
-# require 'yaml'
-# YAML.dump({
-# }, File.open(File.join(File.expand_path(__dir__), 'vendor', 'mitamae.yaml'), 'w'))
+require 'yaml'
+YAML.dump({
+  'frrouting' => {
+    'enabled' => {
+      'bgpd' => true,
+    },
+    'config' => {
+      'zebra' => [
+        'hostname vagrant',
+      ],
+      'bgpd' => [
+        'hostname vagrant',
+      ],
+    },
+  },
+}, File.open(File.join(File.expand_path(__dir__), 'vendor', 'mitamae.yaml'), 'w'))
 
 # Download Require Binary
 require 'open-uri'
@@ -107,8 +120,7 @@ Vagrant.configure('2') do |config|
         install -o root -g root -m 0755 /vagrant/vendor/mitamae/mitamae-x86_64-linux /usr/local/bin/mitamae
       fi
       cd /vagrant
-      #mitamae local -y vendor/mitamae.yaml helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
-      mitamae local helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
+      mitamae local -y vendor/mitamae.yaml helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
     BASH
   end
 

@@ -250,7 +250,11 @@ template '/etc/frr/daemons' do
 end
 
 node[:frrouting][:config].each do |key, val|
-  unless val.empty?
+  if val.empty?
+    file "/etc/frr/#{key}.conf" do
+      action :delete
+    end
+  else
     template "/etc/frr/#{key}.conf" do
       owner 'frr'
       group 'frr'
