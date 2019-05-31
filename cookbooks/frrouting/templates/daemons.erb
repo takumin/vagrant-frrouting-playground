@@ -1,0 +1,20 @@
+#
+# FRRouting Configuration
+#
+
+# Service Enabled
+<% node[:frrouting][:enabled].each do |key, val| -%>
+<%   unless key == 'vtysh' -%>
+<%= key %>=<%= val.kind_of?(TrueClass) ? 'yes' : 'no' %>
+<%   end -%>
+<% end -%>
+
+# VTY Shell Enabled
+vtysh_enable=<%= node[:frrouting][:enabled][:vtysh].kind_of?(TrueClass) ? 'yes' : 'no' %>
+
+# Service Options
+<% node[:frrouting][:options].each do |key, val| -%>
+<%   unless val.empty? -%>
+<%= key %>_options=" <%= val.join(' ') %>"
+<%   end -%>
+<% end -%>
