@@ -79,7 +79,7 @@ Vagrant.configure('2') do |config|
     libvirt.management_network_guest_ipv6 = 'no'
   end
 
-  # MItamae Provision
+  # MItamae Install
   config.vm.provision 'shell' do |shell|
     shell.name   = 'Install mitamae'
     shell.inline = <<~BASH
@@ -88,62 +88,59 @@ Vagrant.configure('2') do |config|
       fi
     BASH
   end
-  config.vm.provision 'shell' do |shell|
-    shell.name   = 'Provision mitamae'
-    shell.env = {
-      'no_proxy'                 => ENV['no_proxy'] || ENV['NO_PROXY'],
-      'NO_PROXY'                 => ENV['no_proxy'] || ENV['NO_PROXY'],
-      'ftp_proxy'                => ENV['ftp_proxy'] || ENV['FTP_PROXY'],
-      'FTP_PROXY'                => ENV['ftp_proxy'] || ENV['FTP_PROXY'],
-      'http_proxy'               => ENV['http_proxy'] || ENV['HTTP_PROXY'],
-      'HTTP_PROXY'               => ENV['http_proxy'] || ENV['HTTP_PROXY'],
-      'https_proxy'              => ENV['https_proxy'] || ENV['HTTPS_PROXY'],
-      'HTTPS_PROXY'              => ENV['https_proxy'] || ENV['HTTPS_PROXY'],
-      'APT_REPO_URL_UBUNTU'      => ENV['APT_REPO_URL_UBUNTU'],
-      'APT_REPO_URL_PARTNER'     => ENV['APT_REPO_URL_PARTNER'],
-      'APT_REPO_URL_JA'          => ENV['APT_REPO_URL_JA'],
-      'APT_REPO_URL_JA_NON_FREE' => ENV['APT_REPO_URL_JA_NON_FREE'],
-      'APT_REPO_URL_FRROUTING'   => ENV['APT_REPO_URL_FRROUTING'],
-    }
-    shell.inline = <<~BASH
-      cd /vagrant
-      mitamae local helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
-    BASH
-  end
 
   Dir.glob('config/*.yaml').each do |file|
     hostname = File.basename(file, '.*')
+    ips = []
 
-    # Loading Yaml
+    # Search IPs
     require 'yaml'
     yaml = YAML.load_file(file)
-    if yaml.key?('network') and
-       yaml['network'].kind_of?(Array) and
-       yaml['network'].size > 0 then
+    if yaml.key?('network') and yaml['network'].kind_of?(Array)
       yaml['network'].each do |network|
         if network.key?('ip')
-          config.vm.network :private_network,
-            :ip => network['ip'],
+          ips << network['ip']
+        end
+      end
+    end
+
+    # Exists IPs
+    if ips.size > 0
+      config.vm.define "#{hostname}" do |domain|
+        domain.vm.hostname = "vagrant-#{hostname}"
+
+        ips.each do |ip|
+          domain.vm.network :private_network,
+            :ip => ip,
             :libvirt__network_name => 'vagrant-frrouting',
             :libvirt__dhcp_enabled => false,
             :libvirt__forward_mode => 'none',
             :libvirt__guest_ipv6 => 'no'
         end
-      end
-    end
 
-    # Vagrant Domain
-    config.vm.define "#{hostname}" do |domain|
-      # Hostname
-      domain.vm.hostname = "vagrant-#{hostname}"
-
-      # Override Provision
-      config.vm.provision 'shell' do |shell|
-        shell.name   = 'Provision mitamae'
-        shell.inline = <<~BASH
-          cd /vagrant
-          mitamae local -y #{file} helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
-        BASH
+        # MItamae Provision
+        domain.vm.provision 'shell' do |shell|
+          shell.name   = 'Provision mitamae'
+          shell.env = {
+            'no_proxy'                 => ENV['no_proxy'] || ENV['NO_PROXY'],
+            'NO_PROXY'                 => ENV['no_proxy'] || ENV['NO_PROXY'],
+            'ftp_proxy'                => ENV['ftp_proxy'] || ENV['FTP_PROXY'],
+            'FTP_PROXY'                => ENV['ftp_proxy'] || ENV['FTP_PROXY'],
+            'http_proxy'               => ENV['http_proxy'] || ENV['HTTP_PROXY'],
+            'HTTP_PROXY'               => ENV['http_proxy'] || ENV['HTTP_PROXY'],
+            'https_proxy'              => ENV['https_proxy'] || ENV['HTTPS_PROXY'],
+            'HTTPS_PROXY'              => ENV['https_proxy'] || ENV['HTTPS_PROXY'],
+            'APT_REPO_URL_UBUNTU'      => ENV['APT_REPO_URL_UBUNTU'],
+            'APT_REPO_URL_PARTNER'     => ENV['APT_REPO_URL_PARTNER'],
+            'APT_REPO_URL_JA'          => ENV['APT_REPO_URL_JA'],
+            'APT_REPO_URL_JA_NON_FREE' => ENV['APT_REPO_URL_JA_NON_FREE'],
+            'APT_REPO_URL_FRROUTING'   => ENV['APT_REPO_URL_FRROUTING'],
+          }
+          shell.inline = <<~BASH
+            cd /vagrant
+            mitamae local -y #{file} helpers/keeper.rb #{MITAMAE_COOKBOOKS.join(' ')}
+          BASH
+        end
       end
     end
   end
