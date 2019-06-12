@@ -1,5 +1,8 @@
 # vim: set ft=ruby :
 
+require 'open-uri'
+require 'yaml'
+
 # MItamae Github Release Tag
 MITAMAE_RELEASE_TAG ||= 'v1.7.5'
 
@@ -12,7 +15,6 @@ MITAMAE_COOKBOOKS = [
 ]
 
 # Download Require Binary
-require 'open-uri'
 [
   {
     :name => 'mitamae',
@@ -43,79 +45,75 @@ Vagrant.require_version '>= 2.2.4'
 
 # Vagrant Configuration
 Vagrant.configure('2') do |config|
-  # Require Plugins
-  config.vagrant.plugins = ['vagrant-libvirt']
-
-  # Ubuntu 18.04 Box
-  config.vm.box = 'ubuntu1804'
-  config.vm.box_url = 'https://github.com/takumin/vagrant-box-libvirt-ubuntu/releases/download/v0.0.3/ubuntu-amd64-bionic-libvirt.box'
-
-  # Synced Directory
-  if ENV['NFS_MOUNT_DIR'] then
-    # NFS Mount
-    config.vm.synced_folder ENV['NFS_MOUNT_DIR'], '/vagrant',
-      type: 'nfs',
-      nfs_version: 4,
-      nfs_udp: false
-  else
-    # Rsync Copy
-    config.vm.synced_folder '.', '/vagrant',
-      type: 'rsync',
-      rsync__exclude: ['.git/']
-  end
-
-  # Libvirt Provider Configuration
-  config.vm.provider :libvirt do |libvirt|
-    # CPU
-    libvirt.cpus = 2
-    # Memory
-    libvirt.memory = 2048
-    # Monitor
-    libvirt.graphics_type = 'spice'
-    libvirt.graphics_ip = '127.0.0.1'
-    libvirt.video_type = 'qxl'
-    # Network
-    libvirt.management_network_mode = 'nat'
-    libvirt.management_network_guest_ipv6 = 'no'
-  end
-
-  # MItamae Install
-  config.vm.provision 'shell' do |shell|
-    shell.name   = 'Install mitamae'
-    shell.inline = <<~BASH
-      if ! mitamae version > /dev/null 2>&1; then
-        install -o root -g root -m 0755 /vagrant/vendor/mitamae/mitamae-x86_64-linux /usr/local/bin/mitamae
-      fi
-    BASH
-  end
-
+  # Multi Machine
   Dir.glob('config/*.yaml').each do |file|
+    # Filename Hostname
     hostname = File.basename(file, '.*')
-    ips = []
 
-    # Search IPs
-    require 'yaml'
+    # Loading YAML
     yaml = YAML.load_file(file)
-    if yaml.key?('network') and yaml['network'].kind_of?(Array)
-      yaml['network'].each do |network|
-        if network.key?('ip')
-          ips << network['ip']
-        end
-      end
-    end
 
-    # Exists IPs
-    if ips.size > 0
+    # Check Networks
+    if yaml.key?('network') and yaml['network'].size > 0
       config.vm.define "#{hostname}" do |domain|
+        # Require Plugins
+        domain.vagrant.plugins = ['vagrant-libvirt']
+
+        # Ubuntu 18.04 Box
+        domain.vm.box = 'ubuntu1804'
+        domain.vm.box_url = 'https://github.com/takumin/vagrant-box-libvirt-ubuntu/releases/download/v0.0.3/ubuntu-amd64-bionic-libvirt.box'
+
+        # Hostname
         domain.vm.hostname = "vagrant-#{hostname}"
 
-        ips.each do |ip|
+        # Private Network
+        yaml['network'].each do |nw|
           domain.vm.network :private_network,
-            :ip => ip,
-            :libvirt__network_name => 'vagrant-frrouting',
+            :ip => nw['addr'],
+            :libvirt__netmask => nw['mask'],
+            :libvirt__network_name => nw['name'],
             :libvirt__dhcp_enabled => false,
             :libvirt__forward_mode => 'none',
             :libvirt__guest_ipv6 => 'no'
+        end
+
+        # Synced Directory
+        if ENV['NFS_MOUNT_DIR'] then
+          # NFS Mount
+          domain.vm.synced_folder ENV['NFS_MOUNT_DIR'], '/vagrant',
+            type: 'nfs',
+            nfs_version: 4,
+            nfs_udp: false
+        else
+          # Rsync Copy
+          domain.vm.synced_folder '.', '/vagrant',
+            type: 'rsync',
+            rsync__exclude: ['.git/']
+        end
+
+        # Libvirt Provider Configuration
+        domain.vm.provider :libvirt do |libvirt|
+          # CPU
+          libvirt.cpus = 2
+          # Memory
+          libvirt.memory = 2048
+          # Monitor
+          libvirt.graphics_type = 'spice'
+          libvirt.graphics_ip = '127.0.0.1'
+          libvirt.video_type = 'qxl'
+          # Network
+          libvirt.management_network_mode = 'nat'
+          libvirt.management_network_guest_ipv6 = 'no'
+        end
+
+        # MItamae Install
+        domain.vm.provision 'shell' do |shell|
+          shell.name   = 'Install mitamae'
+          shell.inline = <<~BASH
+            if ! mitamae version > /dev/null 2>&1; then
+              install -o root -g root -m 0755 /vagrant/vendor/mitamae/mitamae-x86_64-linux /usr/local/bin/mitamae
+            fi
+          BASH
         end
 
         # MItamae Provision
