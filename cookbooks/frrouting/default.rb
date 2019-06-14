@@ -217,6 +217,11 @@ apt_keyring 'FRRouting Debian Repository <dev@lists.frrouting.org>' do
   uri 'https://deb.frrouting.org/frr/keys.asc'
 end
 
+apt_keyring 'David Lamparter <equinox-debian@diac24.net>' do
+  finger '3D9968AC9AE7BE1169288DDB1FD5839895F57FDA'
+  uri 'https://deb.frrouting.org/frr/keys.asc'
+end
+
 apt_repository 'FRRouting Repository' do
   path '/etc/apt/sources.list.d/frrouting.list'
   entry [
