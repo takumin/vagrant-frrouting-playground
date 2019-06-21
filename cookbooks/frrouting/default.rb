@@ -259,12 +259,21 @@ kernel_version_major = node[:kernel][:version].split('.')[0].to_i
 kernel_version_minor = node[:kernel][:version].split('.')[1].to_i
 kernel_version_patch = node[:kernel][:version].split('.')[2].to_i
 
-if kernel_version_major >= 4 and kernel_version_minor >= 5 then
-  modules = [
-    'mpls_router',
-    'mpls_iptunnel',
-  ]
+modules = [
+  'mpls_router',
+  'mpls_iptunnel',
+]
 
+exist_mpls_modules = true
+
+modules.each do |mod|
+  unless run_command(['modprobe', '-n', mod], error: false).success? then
+    exist_mpls_modules = false
+    break
+  end
+end
+
+if exist_mpls_modules and kernel_version_major >= 4 and kernel_version_minor >= 5 then
   modules.each do |mod|
     execute "modprobe -- #{mod}" do
       not_if "lsmod | grep -qs #{mod}"
