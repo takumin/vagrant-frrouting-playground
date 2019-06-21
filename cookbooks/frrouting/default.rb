@@ -147,65 +147,168 @@ end
 unless node[:frrouting][:config].kind_of?(Hash) then
   node[:frrouting][:config] = {}
 end
-unless node[:frrouting][:config][:zebra].kind_of?(Array) then
-  node[:frrouting][:config][:zebra] = []
+unless node[:frrouting][:config][:zebra].kind_of?(String) then
+  node[:frrouting][:config][:zebra] = ''
 end
-unless node[:frrouting][:config][:bgpd].kind_of?(Array) then
-  node[:frrouting][:config][:bgpd] = []
+unless node[:frrouting][:config][:bgpd].kind_of?(String) then
+  node[:frrouting][:config][:bgpd] = ''
 end
-unless node[:frrouting][:config][:ospfd].kind_of?(Array) then
-  node[:frrouting][:config][:ospfd] = []
+unless node[:frrouting][:config][:ospfd].kind_of?(String) then
+  node[:frrouting][:config][:ospfd] = ''
 end
-unless node[:frrouting][:config][:ospf6d].kind_of?(Array) then
-  node[:frrouting][:config][:ospf6d] = []
+unless node[:frrouting][:config][:ospf6d].kind_of?(String) then
+  node[:frrouting][:config][:ospf6d] = ''
 end
-unless node[:frrouting][:config][:ripd].kind_of?(Array) then
-  node[:frrouting][:config][:ripd] = []
+unless node[:frrouting][:config][:ripd].kind_of?(String) then
+  node[:frrouting][:config][:ripd] = ''
 end
-unless node[:frrouting][:config][:ripngd].kind_of?(Array) then
-  node[:frrouting][:config][:ripngd] = []
+unless node[:frrouting][:config][:ripngd].kind_of?(String) then
+  node[:frrouting][:config][:ripngd] = ''
 end
-unless node[:frrouting][:config][:isisd].kind_of?(Array) then
-  node[:frrouting][:config][:isisd] = []
+unless node[:frrouting][:config][:isisd].kind_of?(String) then
+  node[:frrouting][:config][:isisd] = ''
 end
-unless node[:frrouting][:config][:pimd].kind_of?(Array) then
-  node[:frrouting][:config][:pimd] = []
+unless node[:frrouting][:config][:pimd].kind_of?(String) then
+  node[:frrouting][:config][:pimd] = ''
 end
-unless node[:frrouting][:config][:ldpd].kind_of?(Array) then
-  node[:frrouting][:config][:ldpd] = []
+unless node[:frrouting][:config][:ldpd].kind_of?(String) then
+  node[:frrouting][:config][:ldpd] = ''
 end
-unless node[:frrouting][:config][:nhrpd].kind_of?(Array) then
-  node[:frrouting][:config][:nhrpd] = []
+unless node[:frrouting][:config][:nhrpd].kind_of?(String) then
+  node[:frrouting][:config][:nhrpd] = ''
 end
-unless node[:frrouting][:config][:eigrpd].kind_of?(Array) then
-  node[:frrouting][:config][:eigrpd] = []
+unless node[:frrouting][:config][:eigrpd].kind_of?(String) then
+  node[:frrouting][:config][:eigrpd] = ''
 end
-unless node[:frrouting][:config][:babeld].kind_of?(Array) then
-  node[:frrouting][:config][:babeld] = []
+unless node[:frrouting][:config][:babeld].kind_of?(String) then
+  node[:frrouting][:config][:babeld] = ''
 end
-unless node[:frrouting][:config][:sharpd].kind_of?(Array) then
-  node[:frrouting][:config][:sharpd] = []
+unless node[:frrouting][:config][:sharpd].kind_of?(String) then
+  node[:frrouting][:config][:sharpd] = ''
 end
-unless node[:frrouting][:config][:pbrd].kind_of?(Array) then
-  node[:frrouting][:config][:pbrd] = []
+unless node[:frrouting][:config][:pbrd].kind_of?(String) then
+  node[:frrouting][:config][:pbrd] = ''
 end
-unless node[:frrouting][:config][:staticd].kind_of?(Array) then
-  node[:frrouting][:config][:staticd] = []
+unless node[:frrouting][:config][:staticd].kind_of?(String) then
+  node[:frrouting][:config][:staticd] = ''
 end
-unless node[:frrouting][:config][:bfdd].kind_of?(Array) then
-  node[:frrouting][:config][:bfdd] = []
+unless node[:frrouting][:config][:bfdd].kind_of?(String) then
+  node[:frrouting][:config][:bfdd] = ''
 end
-unless node[:frrouting][:config][:fabricd].kind_of?(Array) then
-  node[:frrouting][:config][:fabricd] = []
+unless node[:frrouting][:config][:fabricd].kind_of?(String) then
+  node[:frrouting][:config][:fabricd] = ''
 end
-unless node[:frrouting][:config][:watchfrr].kind_of?(Array) then
-  node[:frrouting][:config][:watchfrr] = []
+unless node[:frrouting][:config][:watchfrr].kind_of?(String) then
+  node[:frrouting][:config][:watchfrr] = ''
 end
-unless node[:frrouting][:config][:frr].kind_of?(Array) then
-  node[:frrouting][:config][:frr] = ['log syslog informational']
+unless node[:frrouting][:config][:frr].kind_of?(String) then
+  node[:frrouting][:config][:frr] = 'log syslog informational'
 end
-unless node[:frrouting][:config][:vtysh].kind_of?(Array) then
-  node[:frrouting][:config][:vtysh] = ['service integrated-vtysh-config']
+unless node[:frrouting][:config][:vtysh].kind_of?(String) then
+  node[:frrouting][:config][:vtysh] = 'service integrated-vtysh-config'
+end
+
+#
+# Public Variables - MPLS Configuration
+#
+
+unless node[:frrouting][:mpls].kind_of?(Hash) then
+  node[:frrouting][:mpls] = {}
+end
+unless node[:frrouting][:mpls][:interfaces].kind_of?(Array) then
+  node[:frrouting][:mpls][:interfaces] = []
+end
+unless node[:frrouting][:mpls][:platform_labels].kind_of?(Integer) then
+  node[:frrouting][:mpls][:platform_labels] = 0
+end
+
+#
+# Forwarding Configuration
+#
+
+execute 'sysctl net.ipv4.conf.all.forwarding=1' do
+  not_if 'test $(sysctl -n net.ipv4.conf.all.forwarding) -eq 1'
+end
+
+execute 'sysctl net.ipv6.conf.all.forwarding=1' do
+  not_if 'test $(sysctl -n net.ipv6.conf.all.forwarding) -eq 1'
+end
+
+file '/etc/sysctl.conf' do
+  action :edit
+  block do |content|
+    if content.match(/^net\.ipv4\.conf\.all\.forwarding/)
+      content.gsub!(/^net\.ipv4\.conf\.all\.forwarding.*/, "net.ipv4.conf.all.forwarding = 1")
+    else
+      content << "\nnet.ipv4.conf.all.forwarding = 1"
+    end
+
+    if content.match(/^net\.ipv6\.conf\.all\.forwarding/)
+      content.gsub!(/^net\.ipv6\.conf\.all\.forwarding.*/, "net.ipv6.conf.all.forwarding = 1")
+    else
+      content << "\nnet.ipv6.conf.all.forwarding = 1"
+    end
+  end
+end
+
+#
+# MPLS Kernel Modules
+#
+
+kernel_version_major = node[:kernel][:version].split('.')[0].to_i
+kernel_version_minor = node[:kernel][:version].split('.')[1].to_i
+kernel_version_patch = node[:kernel][:version].split('.')[2].to_i
+
+if kernel_version_major >= 4 and kernel_version_minor >= 5 then
+  modules = [
+    'mpls_router',
+    'mpls_iptunnel',
+  ]
+
+  modules.each do |mod|
+    execute "modprobe -- #{mod}" do
+      not_if "lsmod | grep -qs #{mod}"
+    end
+  end
+
+  file '/etc/modules-load.d/mpls.conf' do
+    owner 'root'
+    group 'root'
+    mode  '0644'
+    content "#{modules.join("\n")}"
+  end
+
+  node[:frrouting][:mpls][:interfaces].each do |interface|
+    execute "sysctl net.mpls.conf.#{interface}.input=1" do
+      not_if "test $(sysctl -n net.mpls.conf.#{interface}.input) -eq 1"
+    end
+
+    file '/etc/sysctl.conf' do
+      action :edit
+      block do |content|
+        if content.match(/^net\.mpls\.conf\.#{interface}\.input/)
+          content.gsub!(/^net\.mpls\.conf\.#{interface}\.input.*/, "net.mpls.conf.#{interface}.input = 1")
+        else
+          content << "\nnet.mpls.conf.#{interface}.input = 1"
+        end
+      end
+    end
+  end
+
+  execute "sysctl net.mpls.platform_labels=#{node[:frrouting][:mpls][:platform_labels]}" do
+    not_if "test $(sysctl -n net.mpls.platform_labels) -eq #{node[:frrouting][:mpls][:platform_labels]}"
+  end
+
+  file '/etc/sysctl.conf' do
+    action :edit
+    block do |content|
+      if content.match(/^net\.mpls\.platform_labels/)
+        content.gsub!(/^net\.mpls\.platform_labels.*/, "net.mpls.platform_labels = #{node[:frrouting][:mpls][:platform_labels]}")
+      else
+        content << "\nnet.mpls.platform_labels = #{node[:frrouting][:mpls][:platform_labels]}"
+      end
+    end
+  end
 end
 
 #
@@ -227,7 +330,7 @@ apt_repository 'FRRouting Repository' do
   entry [
     {
       :default_uri => 'https://deb.frrouting.org/frr',
-      :mirror_uri  => "#{ENV['APT_REPO_URL_FRROUTING'] || node['apt-repo-url-frrouting']}",
+      :mirror_uri  => "#{ENV['APT_REPO_URL_FRROUTING'] || node['apt-repo-url-local-frrouting']}",
       :suite       => '###platform_codename###',
       :components  => [
         'frr-stable',
@@ -248,8 +351,12 @@ package 'frr-pythontools'
 # Admin VTY Shell
 #
 
+execute "usermod -aG frr #{node[:current][:user]}" do
+  not_if "grep -qs '^frr:.*#{node[:current][:user]}' /etc/group"
+end
+
 execute "usermod -aG frrvty #{node[:current][:user]}" do
-  not_if "grep -qs '^frrvty.*#{node[:current][:user]}' /etc/group"
+  not_if "grep -qs '^frrvty:.*#{node[:current][:user]}' /etc/group"
 end
 
 #
@@ -260,6 +367,8 @@ template '/etc/frr/daemons' do
   owner 'frr'
   group 'frr'
   mode  '0640'
+  notifies :run, 'execute[systemctl daemon-reload]'
+  notifies :run, 'execute[systemctl restart frr.service]'
 end
 
 node[:frrouting][:config].each do |key, val|
@@ -293,10 +402,8 @@ end
 
 execute 'systemctl daemon-reload' do
   action :nothing
-  subscribes :run, 'template[/etc/frr/daemons]'
 end
 
 execute 'systemctl restart frr.service' do
   action :nothing
-  subscribes :run, 'template[/etc/frr/daemons]'
 end
